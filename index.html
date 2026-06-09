@@ -897,22 +897,40 @@ RULE: Never provide a decision without full reasoning. Every field must be compl
 
     // Parse JSON from Part 1
     let meta = {};
-    const jsonMatch = raw.match(/\{[\s\S]*?\}/);
+    const jsonMatch = raw.match(/\{[^{}]*\}/);
     if (jsonMatch) {
       try { meta = JSON.parse(jsonMatch[0]); } catch(e) {}
     }
 
     // Parse Part 2 fields
-    const getText = (key, raw) => {
-      const rx = new RegExp(key+':\\s*([\\s\\S]*?)(?=\\n[A-Z_]+:|$)', 'i');
-      const m = raw.match(rx);
-      return m ? m[1].trim() : '';
+    const getText = (key, txt) => {
+      const lines = txt.split('\n');
+      let out = [], on = false;
+      for (const line of lines) {
+        if (new RegExp('^' + key + ':\\s*', 'i').test(line)) {
+          on = true;
+          const v = line.replace(new RegExp('^' + key + ':\\s*', 'i'), '').trim();
+          if (v) out.push(v);
+          continue;
+        }
+        if (on) {
+          if (/^[A-Z][A-Z_]+:/.test(line)) break;
+          out.push(line);
+        }
+      }
+      return out.join('\n').trim();
     };
-    const getList = (key, raw) => {
-      const rx = new RegExp(key+':[\\s\\S]*?(?=\\n[A-Z_]+:|$)', 'i');
-      const block = raw.match(rx);
-      if (!block) return [];
-      return block[0].split('\n').filter(l=>l.trim().startsWith('-')).map(l=>l.replace(/^-\s*/,'').trim()).filter(Boolean);
+    const getList = (key, txt) => {
+      const lines = txt.split('\n');
+      let out = [], on = false;
+      for (const line of lines) {
+        if (new RegExp('^' + key + ':', 'i').test(line)) { on = true; continue; }
+        if (on) {
+          if (/^[A-Z][A-Z_]+:/.test(line) && !line.trim().startsWith('-')) break;
+          if (line.trim().startsWith('-')) out.push(line.replace(/^\s*-\s*/, '').trim());
+        }
+      }
+      return out.filter(Boolean);
     };
 
     const report = raw.replace(jsonMatch?.[0]||'','').trim();
