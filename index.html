@@ -897,11 +897,34 @@ RULE: Never provide a decision without full reasoning. Every field must be compl
 
     // Parse JSON from Part 1
     let meta = {};
-    const jsonMatch = raw.match(/\{[^{}]*\}/);
-    if (jsonMatch) {
-      try { meta = JSON.parse(jsonMatch[0]); } catch(e) {}
+    // Remove markdown code fences if present
+    const cleanRaw = raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
+    // Extract JSON - find first { and matching }
+    const jsonStart = cleanRaw.indexOf('{');
+    if (jsonStart !== -1) {
+      let depth = 0, jsonEnd = -1;
+      for (let i = jsonStart; i < cleanRaw.length; i++) {
+        if (cleanRaw[i] === '{') depth++;
+        else if (cleanRaw[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }
+      }
+      if (jsonEnd !== -1) {
+        try { meta = JSON.parse(cleanRaw.slice(jsonStart, jsonEnd+1)); } catch(e) {
+          // Try extracting key fields manually
+          const extract = (k) => { const m = cleanRaw.match(new RegExp('"'+k+'"\\s*:\\s*"([^"]*)"')); return m?m[1]:''; };
+          meta = {
+            trade_type: extract('trade_type'), grade: extract('grade'),
+            score: extract('score'), readiness: extract('readiness'),
+            regime: extract('regime'), h4_bias: extract('h4_bias'),
+            volatility: extract('volatility'), breakout_quality: extract('breakout_quality'),
+            rr: extract('rr'), regime_confidence: extract('regime_confidence'),
+            entry: extract('entry'), sl: extract('sl'),
+            tp1: extract('tp1'), tp2: extract('tp2'), tp3: extract('tp3'),
+          };
+        }
+      }
     }
 
+    const raw2use = cleanRaw;
     // Parse Part 2 fields
     const getText = (key, txt) => {
       const lines = txt.split('\n');
@@ -933,7 +956,8 @@ RULE: Never provide a decision without full reasoning. Every field must be compl
       return out.filter(Boolean);
     };
 
-    const report = raw.replace(jsonMatch?.[0]||'','').trim();
+    const jsonStr = jsonStart !== -1 ? raw2use.slice(jsonStart, raw2use.indexOf('}')+1) : '';
+    const report = raw2use.replace(jsonStr,'').trim();
     meta.regime_impact = getText('REGIME_IMPACT', report);
     meta.volatility_impact = getText('VOLATILITY_IMPACT', report);
     meta.breakout_detail = getText('BREAKOUT_DETAIL', report);
