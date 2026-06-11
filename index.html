@@ -871,7 +871,7 @@ RULE: Never provide a decision without full reasoning. Every field must be compl
 
     const body = {
       contents: [{parts}],
-      generationConfig: {maxOutputTokens: 2500, temperature: 0.15}
+      generationConfig: {maxOutputTokens: 8192, temperature: 0.15}
     };
 
     const models = ['gemini-2.5-flash','gemini-2.0-flash','gemini-2.5-pro'];
