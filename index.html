@@ -906,8 +906,9 @@ RULE: Never provide a decision without full reasoning. Every field must be compl
     const cleanRaw = raw.replace(/```json\s*/gi,'').replace(/```\s*/gi,'').trim();
     // Extract JSON - find first { and matching }
     const jsonStart = cleanRaw.indexOf('{');
+    let jsonEnd = -1;
     if (jsonStart !== -1) {
-      let depth = 0, jsonEnd = -1;
+      let depth = 0;
       for (let i = jsonStart; i < cleanRaw.length; i++) {
         if (cleanRaw[i] === '{') depth++;
         else if (cleanRaw[i] === '}') { depth--; if (depth === 0) { jsonEnd = i; break; } }
