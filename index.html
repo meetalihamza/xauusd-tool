@@ -874,7 +874,7 @@ RULE: Never provide a decision without full reasoning. Every field must be compl
       generationConfig: {maxOutputTokens: 8192, temperature: 0.15}
     };
 
-    const models = ['gemini-2.5-flash','gemini-2.0-flash','gemini-2.5-pro'];
+    const models = ['gemini-2.5-flash','gemini-2.0-flash'];
     let res = null, lastErr = '';
 
     for (let i = 0; i < models.length; i++) {
