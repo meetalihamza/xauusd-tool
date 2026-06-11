@@ -895,6 +895,11 @@ RULE: Never provide a decision without full reasoning. Every field must be compl
     const data = await res.json();
     const raw = (data.candidates?.[0]?.content?.parts||[]).map(p=>p.text||'').join('');
 
+    // DEBUG — remove after testing
+    console.log('=== GEMINI RAW RESPONSE ===');
+    console.log(raw);
+    console.log('=== END RAW RESPONSE ===');
+
     // Parse JSON from Part 1
     let meta = {};
     // Remove markdown code fences if present
@@ -956,7 +961,8 @@ RULE: Never provide a decision without full reasoning. Every field must be compl
       return out.filter(Boolean);
     };
 
-    const jsonStr = jsonStart !== -1 ? raw2use.slice(jsonStart, raw2use.indexOf('}')+1) : '';
+    // Use the correctly computed jsonEnd from above
+    const jsonStr = (jsonStart !== -1 && jsonEnd !== -1) ? raw2use.slice(jsonStart, jsonEnd+1) : '';
     const report = raw2use.replace(jsonStr,'').trim();
     meta.regime_impact = getText('REGIME_IMPACT', report);
     meta.volatility_impact = getText('VOLATILITY_IMPACT', report);
